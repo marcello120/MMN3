@@ -45,11 +45,11 @@ const FilmContainer = (props) => {
         <Container className='d-flex justify-content-center'>
             <Card className="m-1 "  style={getStyle()}>
                 <Card.Body>
-                    <Card.Title>{props.title}                     {
-                    !props.topfilm && <ToggleButton className="mb-6 float-end" key={props.index} type="checkbox" id={"button" + props.index}  value={props.index} variant="outline-primary" checked={getChecked()}  onChange={(e) => setChecked()}>
+                    <Card.Title style={{ width: '12rem' }}>  {props.title}       
+                     </Card.Title>
+                    <ToggleButton className="m-3 position-absolute top-0 end-0" key={props.index} type="checkbox" id={"button" + props.index}  value={props.index} variant="outline-primary" checked={getChecked()}  onChange={(e) => setChecked()}>
                         I'm in
-                    </ToggleButton>}</Card.Title>
-
+                    </ToggleButton>
                     <Card.Subtitle className="mb-2">{props.recBy}</Card.Subtitle>
                     {((props.recBy === props.username)|| props.username === 'Admin' ) && <Button onClick={() => props.onDelete(props.title)} variant="danger"> Delete </Button>}
                     <OverlayTrigger placement="right" trigger="click" overlay={popover}>

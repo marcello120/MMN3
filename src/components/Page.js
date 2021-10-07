@@ -2,19 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useHistory } from 'react-router-dom';
 import FilmContainer from './FilmContainer';
 import MyNavbar from './MyNavbar';
-// @ts-ignore
 import { Button, Navbar, Container, Modal, Form, Row, Col } from 'react-bootstrap';
 import db from '../firebase'
-// @ts-ignore
 import firebase from 'firebase';
 import { onSnapshot, collection, setDoc, deleteDoc, updateDoc, doc, arrayRemove, query, orderBy } from 'firebase/firestore';
 import DateContainer from './DateContainer';
-// @ts-ignore
-import PoorPicker from './PoorPicker'
-// @ts-ignore
 import DateTimePicker from 'react-datetime-picker';
-
-
 
 
 const Page = () => {
@@ -38,11 +31,13 @@ const Page = () => {
 
     const [filmList, setFilmList] = useState([])
 
-    const [topfilm, setTopFilm] = useState('');
+    const [topfilm, setTopFilm] = useState([]);
 
     const [dateList, setDateList] = useState([])
 
-    const [topDate, setTopDate] = useState('');
+    const [topDate, setTopDate] = useState([]);
+
+    const [scrollable,setScrollable] = useState(false);
 
     const [time, setTime] = useState(() => {
         const tempdate = new Date()
@@ -80,11 +75,30 @@ const Page = () => {
 
     const addFilm = async () => {
         if (newFilm && newFilm !== undefined && newFilm !== " ") {
-            const docRef = doc(db, 'films', newFilm)
-            const payload = { recBy: username, votes: [username] }
-            await setDoc(docRef, payload)
-            setNewFilm("")
-            setShowFilm(false);
+            if(filmList.some(e => e.title === newFilm)){
+                alert("Film already on list")
+            }else{
+                const docRef = doc(db, 'films', newFilm)
+                const payload = { recBy: username, votes: [username] }
+                await setDoc(docRef, payload)
+                setNewFilm("")
+                setShowFilm(false);
+            }
+           
+        } else {
+            alert("enter film name or cancel")
+        }
+    }
+
+    const addAnotherFilm = async () => {
+        if (newFilm && newFilm !== undefined && newFilm !== " ") {
+            if(filmList.some(e => e.title === newFilm)){
+                alert("Film already on list")
+            }else{
+                const docRef = doc(db, 'films', newFilm)
+                const payload = { recBy: username, votes: [username] }
+                await setDoc(docRef, payload)
+            }
         } else {
             alert("enter film name or cancel")
         }
@@ -98,22 +112,47 @@ const Page = () => {
 
     const handleShowDate = () => setShowDate(true);
 
+    const negateScroll = () => setScrollable(!scrollable)
+
     const addDate = async () => {
         if (newDate && newDate !== undefined) {
             const month = newDate.toLocaleString('default', { month: 'short' })
             const nameDay = newDate.toLocaleString('default', { weekday: 'short' })
             const title = (month + " " + newDate.getDate() + " (" + nameDay + ') ' + newDate.getHours() + ':' + ((newDate.getMinutes() < 10 ? '0' : '') + newDate.getMinutes()))
             console.log(title)
-            const docRef = doc(db, 'dates', title)
-            const payload = { recBy: username, votes: [username], date: newDate }
-            await setDoc(docRef, payload)
-            setNewDate(getTempDate())
-            setTime(getTempDate())
-            setShowDate(false);
+            if(dateList.some(e => e.title === title)){
+                alert("Date already on list")
+            }else{
+                const docRef = doc(db, 'dates', title)
+                const payload = { recBy: username, votes: [username], date: newDate }
+                await setDoc(docRef, payload)
+                setNewDate(getTempDate())
+                setTime(getTempDate())
+                setShowDate(false);
+            }          
         } else {
             alert("enter correct Date or cancel")
         }
     }
+
+    const addAnotherDate = async () => {
+        if (newDate && newDate !== undefined) {
+            const month = newDate.toLocaleString('default', { month: 'short' })
+            const nameDay = newDate.toLocaleString('default', { weekday: 'short' })
+            const title = (month + " " + newDate.getDate() + " (" + nameDay + ') ' + newDate.getHours() + ':' + ((newDate.getMinutes() < 10 ? '0' : '') + newDate.getMinutes()))
+            console.log(title)
+            if(dateList.some(e => e.title === title)){
+                alert("Date already on list")
+            }else{
+                const docRef = doc(db, 'dates', title)
+                const payload = { recBy: username, votes: [username], date: newDate }
+                await setDoc(docRef, payload)
+            }         
+        } else {
+            alert("enter correct Date or cancel")
+        }
+    }
+    
 
     const deleteFilm = async (filmTitle) => {
         if (filmTitle && filmTitle !== undefined && filmTitle !== " ") {
@@ -196,8 +235,8 @@ const Page = () => {
             // @ts-ignore
             const maximuum = Math.max.apply(Math, copylist.map(function (o) { return o.votes.length; }))
             // @ts-ignore
-            const found = copylist.find(element => element.votes.length === maximuum)
-            setTopFilm(found.title)
+            const found = copylist.filter(element => element.votes.length === maximuum)
+            setTopFilm(found)
         });
         return unsub;
     }, [])
@@ -212,40 +251,54 @@ const Page = () => {
                 // @ts-ignore
                 const maximuum = Math.max.apply(Math, copylist.map(function (o) { return o.votes.length; }))
                 // @ts-ignore
-                const found = copylist.find(element => element.votes.length === maximuum)
-                if (found) {
-                    setTopDate(found.title)
-                }
+                const found = copylist.filter(element => element.votes.length === maximuum)
+                setTopDate(found)
             }
 
         });
         return unsub;
     }, [])
 
+    const getStyle = () => {
+        if (scrollable){
+            return { maxHeight:'70vh'}
+        }else{
+            return {}
+
+        }
+    }
 
     return (
         <Container>
-            <MyNavbar username={username} logOut={logOut}></MyNavbar>
+            <MyNavbar username={username} setScroll={negateScroll} scroll={scrollable} logOut={logOut}></MyNavbar>
             <Row>
                 <Col>
-                    <h1 className="text-center" >Days:</h1>
-                    <h2 className="text-center" >Top: {topDate} </h2>
-                    <Container >
-                        <div className='text-center'>
+                <div className='text-center mb-2'>
                             <Button className=' btn-lg btn-block' variant="success" onClick={handleShowDate}> Add Time</Button>
                         </div>
+                    <div className="text-center mb-1">
+                        <div className='border border-success' style={{display: 'inline-block'}}>
+                        {topDate.slice(0,3).map((top,index)=>(
+                          <h4 key={top.title}>{top.title} </h4>  
+                    ))}</div>
+                    </div>
+                    <Container className='overflow-auto' style={getStyle()}>                       
                         {dateList.map((date, index) => (
                             <DateContainer className="border border-primary" onVote={doVoteDate} onDelete={deleteDate} index={date.title} key={index} title={date.title} recBy={date.recBy} votes={date.votes} username={username} />
                         ))}
                     </Container>
                 </Col>
                 <Col>
-                    <h1 className="text-center" >Films:</h1>
-                    <h2 className="text-center" >Top: {topfilm} </h2>
-                    <Container >
-                        <div className='text-center'>
+                <div className='text-center mb-2'>
                             <Button className=' btn-lg btn-block' variant="success" onClick={handleShowFilm}> Add Film</Button>
                         </div>
+                    <div className="text-center mb-1">
+                        <div className='border border-success' style={{display: 'inline-block'}}>
+                        {topfilm.slice(0,3).map((top,index)=>(
+                          <h4 key={top.title}>{top.title} </h4>  
+                    ))}</div>
+                    </div>
+                    <Container className='overflow-auto' style={getStyle()}>                        
                         {filmList.map((film, index) => (
                             <FilmContainer className="border border-primary" onVote={doVoteFilm} onDelete={deleteFilm} index={film.title} key={index} title={film.title} recBy={film.recBy} votes={film.votes} username={username} />
                         ))}
@@ -266,12 +319,17 @@ const Page = () => {
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCloseFilm}>
-                        Back
+                    <Container>
+                <Button className='float-start ' variant="light" onClick={addAnotherFilm}>
+                        Add Another
                     </Button>
-                    <Button variant="primary" onClick={addFilm}>
+                    <Button variant="primary" className='float-end ms-3' onClick={addFilm}>
                         Slap it on!
-                    </Button>
+                    </Button>   
+                    <Button variant="secondary" className='float-end ' onClick={handleCloseFilm}>
+                        Back
+                    </Button>  
+                    </Container>
                 </Modal.Footer>
             </Modal>
 
@@ -295,12 +353,17 @@ const Page = () => {
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCloseDate}>
-                        Back
+                    <Container>
+                <Button className='float-start ' variant="light" onClick={addAnotherDate}>
+                        Add Another
                     </Button>
-                    <Button variant="primary" onClick={addDate}>
+                    <Button variant="primary" className='float-end ms-3' onClick={addDate}>
                         Slap it on!
-                    </Button>
+                    </Button>   
+                    <Button variant="secondary" className='float-end ' onClick={handleCloseDate}>
+                        Back
+                    </Button>                     
+                    </Container>    
                 </Modal.Footer>
             </Modal>
 
